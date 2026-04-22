@@ -58,7 +58,7 @@ CREATE TABLE centrali (
     anno_installazione INTEGER,
     anno_revisione_generale INTEGER,
     protocollo_indirizzo VARCHAR(50),
-    port INTEGER DEFAULT 502,
+    tcp_port INTEGER DEFAULT 502,
     centrale_tipologia VARCHAR(50) CHECK (centrale_tipologia IN ('convenzionale', 'indirizzata', 'analogica', 'mista')),
     zona_centrale VARCHAR(100),
     note TEXT,
@@ -245,44 +245,25 @@ CREATE TABLE verbali (
 -- VIEWS
 -- ============================================================
 
-CREATE VIEW scadenze_imminenti AS
+CREATE OR REPLACE VIEW scadenze_imminenti AS
 SELECT
-    s.id AS sede_id,
-    s.nome_sede,
-    c.id AS centrale_id,
-    c.marca,
-    c.modello,
-    pm.protocollo_tipo,
+    pm.id,
+    pm.centrale_id,
     pm.data_prevista,
     pm.stato,
-    EXTRACT(DAY FROM (pm.data_prevista - CURRENT_DATE)) AS giorni_rimanenti
+    pm.protocollo_tipo,
+    pm.data_prevista - CURRENT_DATE AS giorni_rimanenti
 FROM piani_manutenzione pm
-JOIN centrali c ON c.id = pm.centrale_id
-JOIN sedi s ON s.id = c.sede_id
-WHERE pm.data_prevista <= CURRENT_DATE + INTERVAL '30 days'
-    AND pm.stato IN ('pendente', 'in_corso')
-ORDER BY pm.data_prevista;
+WHERE pm.stato IN ('pendente', 'in_corso');
 
-CREATE VIEW copertura_ciclo AS
+CREATE OR REPLACE VIEW copertura_ciclo AS
 SELECT
-    c.id AS centrale_id,
+    c.id,
     c.marca,
     c.modello,
-    COUNT(d.id) FILTER (WHERE d.stato = 'attivo') AS totale_punti_attivi,
-    COUNT(vp.id) FILTER (
-        WHERE vp.tipologia_prova = 'prova_funzionalità'
-        AND vp.created_at >= DATE_TRUNC('year', CURRENT_DATE)
-    ) AS testati_anno_corrente,
-    ROUND(
-        COUNT(vp.id) FILTER (
-            WHERE vp.tipologia_prova = 'prova_funzionalità'
-            AND vp.created_at >= DATE_TRUNC('year', CURRENT_DATE)
-        )::DECIMAL / NULLIF(COUNT(d.id) FILTER (WHERE d.stato = 'attivo'), 0) * 100,
-        2
-    ) AS percentuale_copertura
+    COUNT(d.id) AS totale_dispositivi
 FROM centrali c
-LEFT JOIN dispositivi d ON d.centrale_id = c.id AND d.active = TRUE
-LEFT JOIN verifiche_punto vp ON vp.dispositivo_id = d.id
+LEFT JOIN dispositivi d ON d.centrale_id = c.id
 GROUP BY c.id, c.marca, c.modello;
 
 -- ============================================================
