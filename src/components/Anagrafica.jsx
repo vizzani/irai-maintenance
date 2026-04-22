@@ -14,7 +14,7 @@ const Anagrafica = ({ initialTab = 'clienti' }) => {
   const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
-    cliente: { ragione_sociale: '', partita_iva: '', indirizzo: '', città: '', provincia: '', telefono: '', email: '' },
+    cliente: { ragione_sociale: '', partita_iva: '', codice_fiscale: '', indirizzo: '', cap: '', città: '', provincia: '', telefono: '', email: '', pec: '', rappresentante_legale: '' },
     sede: { nome_sede: '', indirizzo: '', città: '', livello_rischio: 'medio', attività: '' },
     centrale: { marca: '', modello: '', numero_serie: '', anno_installazione: '', centrale_tipologia: 'indirizzata' },
     dispositivo: { dispositivo_tipo: 'rilevatore_fumo', indirizzo_centrale: '', zona: '', posizione: '', piano: '', marca: '', modello: '' }
@@ -319,13 +319,22 @@ const Anagrafica = ({ initialTab = 'clienti' }) => {
                         className="w-full p-2 border rounded-lg"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Città</label>
                         <input
                           type="text"
                           value={form.cliente.città}
                           onChange={(e) => setForm({ ...form, cliente: { ...form.cliente, città: e.target.value } })}
+                          className="w-full p-2 border rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">CAP</label>
+                        <input
+                          type="text"
+                          value={form.cliente.cap}
+                          onChange={(e) => setForm({ ...form, cliente: { ...form.cliente, cap: e.target.value } })}
                           className="w-full p-2 border rounded-lg"
                         />
                       </div>
@@ -339,14 +348,45 @@ const Anagrafica = ({ initialTab = 'clienti' }) => {
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                      <input
-                        type="email"
-                        value={form.cliente.email}
-                        onChange={(e) => setForm({ ...form, cliente: { ...form.cliente, email: e.target.value } })}
-                        className="w-full p-2 border rounded-lg"
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input
+                          type="email"
+                          value={form.cliente.email}
+                          onChange={(e) => setForm({ ...form, cliente: { ...form.cliente, email: e.target.value } })}
+                          className="w-full p-2 border rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">PEC</label>
+                        <input
+                          type="email"
+                          value={form.cliente.pec}
+                          onChange={(e) => setForm({ ...form, cliente: { ...form.cliente, pec: e.target.value } })}
+                          className="w-full p-2 border rounded-lg"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Codice Fiscale</label>
+                        <input
+                          type="text"
+                          value={form.cliente.codice_fiscale}
+                          onChange={(e) => setForm({ ...form, cliente: { ...form.cliente, codice_fiscale: e.target.value } })}
+                          className="w-full p-2 border rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Rappresentante Legale</label>
+                        <input
+                          type="text"
+                          value={form.cliente.rappresentante_legale}
+                          onChange={(e) => setForm({ ...form, cliente: { ...form.cliente, rappresentante_legale: e.target.value } })}
+                          className="w-full p-2 border rounded-lg"
+                        />
+                      </div>
                     </div>
                   </>
                 )}
