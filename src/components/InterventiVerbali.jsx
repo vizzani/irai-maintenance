@@ -551,10 +551,11 @@ const InterventiVerbali = ({ initialTab = 'interventi' }) => {
                   onChange={(e) => setNewIntervento({ ...newIntervento, protocollo_tipo: e.target.value })}
                   className="w-full p-2 border rounded-lg"
                 >
-                  <option value="sorveglianza">Sorveglianza</option>
-                  <option value="controllo_periodico">Controllo Periodico</option>
-                  <option value="verifica_annuale">Verifica Annuale</option>
-                  <option value="manutenzione">Manutenzione</option>
+                  <option value="sorveglianza">Sorveglianza (Semestrale)</option>
+                  <option value="controllo_periodico">Controllo Periodico (Annuale)</option>
+                  <option value="presa_in_carico">Presa in Carico P1 - UNI 11224</option>
+                  <option value="revisione">Revisione (ogni 5 anni)</option>
+                  <option value="verifica_generale">Verifica Generale (12 anni)</option>
                 </select>
               </div>
               <div>

@@ -53,6 +53,23 @@ const ChecklistUNI11224 = ({
       { codice: 'CP-05', descrizione: 'Prova trasmissione allarme UA', tipologia: 'prova_efficacia' },
       { codice: 'CP-06', descrizione: 'Controllo tarature sensori', tipologia: 'prova_efficacia' },
     ],
+    presa_in_carico: [
+      { codice: 'P1-01', descrizione: 'Acquisizione progetto esecutivo impianto IRAI (planimetrie, schema a blocchi, relazione tecnica)', norma: 'UNI 11224:2011 - p.5.2.1', tipologia: 'documentale' },
+      { codice: 'P1-02', descrizione: 'Verifica Dichiarazione di Conformità (Di.Co.) D.M. 37/2008 con allegati tecnici', norma: 'D.M. 37/2008 - UNI 11224 p.5.2.2', tipologia: 'documentale' },
+      { codice: 'P1-03', descrizione: 'Verifica certificazioni CE componenti (centrale, rivelatori, PAM, segnalatori) UNI EN 54', norma: 'UNI EN 54 - UNI 11224 p.5.2.3', tipologia: 'documentale' },
+      { codice: 'P1-04', descrizione: 'Acquisizione manuale di uso e manutenzione centrale IRAI e componenti principali', norma: 'UNI 11224:2011 - p.5.2.4', tipologia: 'documentale' },
+      { codice: 'P1-05', descrizione: 'Verifica registro dei controlli precedenti (log storico manutenzioni, guasti)', norma: 'UNI 11224:2011 - p.5.2.5', tipologia: 'documentale' },
+      { codice: 'P1-06', descrizione: 'Acquisizione verbale di collaudo iniziale firmato dall\'installatore', norma: 'UNI 11224:2011 - p.5.2.6', tipologia: 'documentale' },
+      { codice: 'P1-07', descrizione: 'Verifica corrispondenza numero e tipologia rivelatori installati vs progetto', norma: 'UNI 11224:2011 - p.5.3.1', tipologia: 'verifica' },
+      { codice: 'P1-08', descrizione: 'Verifica posizionamento rivelatori: altezze, interdistanze, coperture UNI 9795', norma: 'UNI 9795 - UNI 11224 p.5.3.2', tipologia: 'verifica' },
+      { codice: 'P1-09', descrizione: 'Verifica numero e posizionamento PAM rispetto al progetto', norma: 'UNI 11224:2011 - p.5.3.3', tipologia: 'verifica' },
+      { codice: 'P1-10', descrizione: 'Verifica suddivisione in zone di rivelazione rispetto a planimetrie', norma: 'UNI 11224:2011 - p.5.3.4', tipologia: 'verifica' },
+      { codice: 'P1-11', descrizione: 'Verifica centrale: modello, capacità linee, firmware, corrispondenza progetto', norma: 'UNI EN 54-2 - UNI 11224 p.5.3.5', tipologia: 'verifica' },
+      { codice: 'P1-12', descrizione: 'Verifica cablaggio: tipo linea (singola/ad anello), sezione cavi, percorsi', norma: 'UNI 11224:2011 - p.5.3.6', tipologia: 'verifica' },
+      { codice: 'P1-13', descrizione: 'Verifica interfacce: sgancio porte REI, spegnimento HVAC, attivazione EVAC', norma: 'UNI 11224:2011 - p.5.3.7', tipologia: 'verifica' },
+      { codice: 'P1-14', descrizione: 'Test funzionale completo: simulazione allarme zona per zona, attuatori, temporizzazioni', norma: 'UNI 11224:2011 - p.5.4', tipologia: 'prova_funzionalità' },
+      { codice: 'P1-15', descrizione: 'Compilazione verbale di presa in consegna con eventuali riserve e firma responsabile', norma: 'UNI 11224:2011 - p.6', tipologia: 'documentale' },
+    ],
     revisione: [
       { codice: 'R-01', descrizione: 'Sostituzione accumulatori se >5 anni', tipologia: 'prova_complessiva' },
       { codice: 'R-02', descrizione: 'Pulizia sensori polvere', tipologia: 'prova_funzionalità' },
@@ -73,10 +90,11 @@ const ChecklistUNI11224 = ({
 
   const getProtocolloLabel = (tipo) => {
     const labels = {
-      sorveglianza: 'Sorveglianza (Semestrale)',
-      controllo_periodico: 'Controllo Periodico (Annuale)',
-      revisione: 'Revisione (ogni 5 anni)',
-      verifica_generale: 'Verifica Generale (12 anni)',
+      sorveglianza: 'Sorveglianza (Semestrale) - UNI 11224',
+      controllo_periodico: 'Controllo Periodico (Annuale) - UNI 11224',
+      presa_in_carico: 'Presa in Carico P1 (Prima installazione) - UNI 11224',
+      revisione: 'Revisione (ogni 5 anni) - UNI 11224',
+      verifica_generale: 'Verifica Generale (12 anni) - UNI 11224',
     };
     return labels[tipo] || tipo;
   };
