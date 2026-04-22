@@ -3,6 +3,7 @@ import {
   Building2, MapPin, Cpu, Radio, Plus, Search, 
   Edit, Trash2, ChevronRight, Save, X
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const Anagrafica = ({ initialTab = 'clienti' }) => {
   const [tab, setTab] = useState(initialTab);
@@ -26,12 +27,11 @@ const Anagrafica = ({ initialTab = 'clienti' }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const endpoint = tab === 'clienti' ? '/api/clienti' : 
-                     tab === 'sedi' ? '/api/sedi' :
-                     tab === 'centrali' ? '/api/centrali' : '/api/dispositivi';
-      const res = await fetch(endpoint);
-      const result = await res.json();
-      setData(prev => ({ ...prev, [tab]: result }));
+      const table = tab === 'clienti' ? 'clienti' : 
+                   tab === 'sedi' ? 'sedi' :
+                   tab === 'centrali' ? 'centrali' : 'dispositivi';
+      const { data: result } = await supabase.from(table).select('*').limit(100);
+      setData(prev => ({ ...prev, [tab]: result || [] }));
     } catch (err) {
       console.error('Errore:', err);
     } finally {
@@ -49,12 +49,13 @@ const Anagrafica = ({ initialTab = 'clienti' }) => {
 
   const handleSave = async () => {
     try {
-      const endpoint = `/api/${tab}/save`;
-      await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form[tab.replace(/i$/, '')])
-      });
+      const table = tab === 'clienti' ? 'clienti' : 
+                   tab === 'sedi' ? 'sedi' :
+                   tab === 'centrali' ? 'centrali' : 'dispositivi';
+      const formData = tab === 'clienti' ? form.cliente : 
+                       tab === 'sedi' ? form.sede : 
+                       tab === 'centrali' ? form.centrale : form.dispositivo;
+      await supabase.from(table).insert([formData]);
       setIsEditing(false);
       loadData();
     } catch (err) {
@@ -65,7 +66,10 @@ const Anagrafica = ({ initialTab = 'clienti' }) => {
   const handleDelete = async (id) => {
     if (!confirm('Eliminare questo elemento?')) return;
     try {
-      await fetch(`/api/${tab}/${id}`, { method: 'DELETE' });
+      const table = tab === 'clienti' ? 'clienti' : 
+                   tab === 'sedi' ? 'sedi' :
+                   tab === 'centrali' ? 'centrali' : 'dispositivi';
+      await supabase.from(table).delete().eq('id', id);
       loadData();
     } catch (err) {
       console.error('Errore delete:', err);

@@ -4,6 +4,7 @@ import {
   Download, Plus, Filter, CheckCircle, XCircle, AlertTriangle,
   Clock, MapPin, Cpu, Wrench, Camera, Eye
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const InterventiVerbali = ({ initialTab = 'interventi' }) => {
   const [tab, setTab] = useState(initialTab);
@@ -21,15 +22,15 @@ const InterventiVerbali = ({ initialTab = 'interventi' }) => {
     setLoading(true);
     try {
       const [interventiRes, verbaliRes, ncRes] = await Promise.all([
-        fetch('/api/interventi'),
-        fetch('/api/verbali'),
-        fetch('/api/nc')
+        supabase.from('piani_manutenzione').select('*').limit(100),
+        supabase.from('verbali').select('*').limit(100),
+        supabase.from('non_conformita').select('*').limit(100)
       ]);
 
       setData({
-        interventi: await interventiRes.json(),
-        verbali: await verbaliRes.json(),
-        nc: await ncRes.json()
+        interventi: interventiRes.data || [],
+        verbali: verbaliRes.data || [],
+        nc: ncRes.data || []
       });
     } catch (err) {
       console.error('Errore:', err);

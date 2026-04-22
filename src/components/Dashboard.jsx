@@ -4,6 +4,7 @@ import {
   Building2, Cpu, Wrench, TrendingUp,
   Calendar, Filter, Download, RefreshCw
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const Dashboard = ({ onNavigate }) => {
   const [data, setData] = useState({
@@ -22,17 +23,27 @@ const Dashboard = ({ onNavigate }) => {
   const loadDashboard = async () => {
     setLoading(true);
     try {
-      const [scadenzeRes, statisticheRes, coperturaRes] = await Promise.all([
-        fetch('/api/scadenze'),
-        fetch('/api/statistiche'),
-        fetch('/api/copertura')
+      const [scadenzeRes, centraliRes, ncRes] = await Promise.all([
+        supabase.from('scadenze_imminenti').select('*').limit(10),
+        supabase.from('centrali').select('*', { count: 'exact' }),
+        supabase.from('non_conformita').select('*', { count: 'exact' }).eq('stato', 'aperta')
       ]);
 
-      const scadenze = await scadenzeRes.json();
-      const statistiche = await statisticheRes.json();
-      const copertura = await coperturaRes.json();
+      const scadenze = scadenzeRes.data || [];
+      const totaleCentrali = centraliRes.count || 0;
+      const ncAperte = ncRes.count || 0;
 
-      setData({ scadenze, statistiche, copertura, attivitaRecenti: [] });
+      setData({ 
+        scadenze, 
+        statistiche: { 
+          totaleCentrali, 
+          scadenze30gg: scadenze.length, 
+          ncAperte, 
+          conformitaMedia: 0 
+        }, 
+        copertura: [], 
+        attivitaRecenti: [] 
+      });
     } catch (err) {
       console.error('Errore load dashboard:', err);
     } finally {

@@ -3,6 +3,7 @@ import {
   CheckCircle, XCircle, AlertTriangle, Camera, 
   Save, Download, Wifi, WifiOff, ChevronDown, ChevronUp 
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const ChecklistUNI11224 = ({ 
   pianoId, 
@@ -158,13 +159,8 @@ const ChecklistUNI11224 = ({
 
     try {
       if (isOnline) {
-        const response = await fetch('/api/verifiche/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        
-        if (!response.ok) throw new Error('Errore salvataggio');
+        const { error } = await supabase.from('verifiche_punto').insert(payload);
+        if (error) throw new Error('Errore salvataggio');
       } else {
         localStorage.setItem(
           `pending_sync_${pianoId}_${Date.now()}`,
@@ -196,20 +192,7 @@ const ChecklistUNI11224 = ({
     };
     
     if (isOnline) {
-      const response = await fetch('/api/verbali/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reportData),
-      });
-      
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `VERBALE_${protocolloTipo}_${centraleId}_${new Date().toISOString().split('T')[0]}.pdf`;
-        a.click();
-      }
+      alert('Report PDF in fase di sviluppo. Usa il pulsante Salva per memorizzare i dati.');
     } else {
       alert('Report non disponibile offline. Sincronizza quando sei online.');
     }
