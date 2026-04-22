@@ -10,11 +10,14 @@ const InterventiVerbali = ({ initialTab = 'interventi' }) => {
   const [tab, setTab] = useState(initialTab);
   const [data, setData] = useState({ interventi: [], verbali: [], nc: [] });
   const [centrali, setCentrali] = useState([]);
+  const [sedi, setSedi] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState({ stato: '', dataDa: '', dataA: '' });
   const [showModal, setShowModal] = useState(false);
+  const [showChecklist, setShowChecklist] = useState(false);
+  const [selectedIntervento, setSelectedIntervento] = useState(null);
   const [newIntervento, setNewIntervento] = useState({
     centrale_id: '',
     protocollo_tipo: 'sorveglianza',
@@ -25,11 +28,22 @@ const InterventiVerbali = ({ initialTab = 'interventi' }) => {
   useEffect(() => {
     loadData();
     loadCentrali();
+    loadSedi();
   }, [tab]);
 
+  const openIntervento = async (item) => {
+    setSelectedIntervento(item);
+    setShowChecklist(true);
+  };
+
   const loadCentrali = async () => {
-    const { data } = await supabase.from('centrali').select('*, sedi(nome_sede)').limit(100);
+    const { data } = await supabase.from('centrali').select('*, sedi(nome_sede, id)').limit(100);
     setCentrali(data || []);
+  };
+
+  const loadSedi = async () => {
+    const { data } = await supabase.from('sedi').select('*').limit(100);
+    setSedi(data || []);
   };
 
   const loadData = async () => {
@@ -96,6 +110,17 @@ const InterventiVerbali = ({ initialTab = 'interventi' }) => {
     } catch (err) {
       console.error('Errore download:', err);
     }
+  };
+
+  const getProtocolloLabel = (tipo) => {
+    const labels = {
+      sorveglianza: 'Sorveglianza',
+      controllo_periodico: 'Controllo Periodico',
+      presa_in_carico: 'Presa in Carico P1',
+      revisione: 'Revisione',
+      verifica_generale: 'Verifica Generale',
+    };
+    return labels[tipo] || tipo;
   };
 
   const getStatoBadge = (stato) => {
@@ -247,19 +272,23 @@ const InterventiVerbali = ({ initialTab = 'interventi' }) => {
                     getFilteredData().map((item, idx) => (
                       <tr key={idx} className="hover:bg-gray-50">
                         <td className="p-3 text-sm">
-                          {item.data_intervento ? new Date(item.data_intervento).toLocaleDateString('it-IT') : '-'}
+                          {item.data_prevista ? new Date(item.data_prevista).toLocaleDateString('it-IT') : '-'}
                         </td>
-                        <td className="p-3 text-sm">{item.sede_id}</td>
-                        <td className="p-3 text-sm">{item.centrale_id}</td>
-                        <td className="p-3 text-sm">{item.protocollo_tipo}</td>
-                        <td className="p-3 text-sm">{item.tecnico}</td>
+                        <td className="p-3 text-sm">
+                          {centrali.find(c => c.id === item.centrale_id)?.sedi?.nome_sede || '-'}
+                        </td>
+                        <td className="p-3 text-sm">
+                          {centrali.find(c => c.id === item.centrale_id)?.marca || ''} {centrali.find(c => c.id === item.centrale_id)?.modello || ''}
+                        </td>
+                        <td className="p-3 text-sm">{getProtocolloLabel(item.protocollo_tipo)}</td>
+                        <td className="p-3 text-sm">{item.stato || '-'}</td>
                         <td className="p-3">{getStatoBadge(item.stato)}</td>
                         <td className="p-3 text-right">
                           <button
-                            onClick={() => setSelected(item)}
-                            className="p-1 text-gray-400 hover:text-blue-600"
+                            onClick={() => openIntervento(item)}
+                            className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                           >
-                            <Eye className="w-4 h-4" />
+                            Lavora
                           </button>
                         </td>
                       </tr>
@@ -581,6 +610,41 @@ const InterventiVerbali = ({ initialTab = 'interventi' }) => {
               >
                 Salva
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showChecklist && selectedIntervento && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-4 border-b flex justify-between items-center bg-blue-600 text-white">
+              <div>
+                <h2 className="text-lg font-bold">
+                  {getProtocolloLabel(selectedIntervento.protocollo_tipo)}
+                </h2>
+                <p className="text-sm opacity-80">
+                  {centrali.find(c => c.id === selectedIntervento.centrale_id)?.marca || ''} {' '}
+                  {centrali.find(c => c.id === selectedIntervento.centrale_id)?.modello || ''} - {' '}
+                  {centrali.find(c => c.id === selectedIntervento.centrale_id)?.sedi?.nome_sede || 'Sede'}
+                </p>
+              </div>
+              <button onClick={() => setShowChecklist(false)} className="p-2 hover:bg-blue-700 rounded">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <ChecklistUNI11224
+                pianoId={selectedIntervento.id}
+                centraleId={selectedIntervento.centrale_id}
+                protocolloTipo={selectedIntervento.protocollo_tipo}
+                onComplete={async (data) => {
+                  await supabase.from('piani_manutenzione').update({ stato: 'completato' }).eq('id', selectedIntervento.id);
+                  setShowChecklist(false);
+                  loadData();
+                }}
+                deviceList={[]}
+              />
             </div>
           </div>
         </div>

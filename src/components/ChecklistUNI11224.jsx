@@ -101,24 +101,36 @@ const ChecklistUNI11224 = ({
 
   const initVerifiche = useCallback(() => {
     const punti = puntiNorma[protocolloTipo] || [];
-    const initial = {};
     
-    deviceList.forEach(device => {
-      initial[device.id] = punti.map(punto => ({
-        puntoCodice: punto.codice,
-        puntoDescrizione: punto.descrizione,
+    if (deviceList.length === 0) {
+      const initial = punti.map(punto => ({
+        codice: punto.codice,
+        descrizione: punto.descrizione,
+        norma: punto.norma || '',
         tipologia: punto.tipologia,
         esito: null,
-        valoreRilevato: '',
         note: '',
-        oraInizio: null,
-        oraFine: null,
-        fotoPrima: null,
-        fotoDopo: null,
+        foto: null,
       }));
-    });
-    
-    setVerifiche(initial);
+      setVerifiche({ _items: initial });
+    } else {
+      const initial = {};
+      deviceList.forEach(device => {
+        initial[device.id] = punti.map(punto => ({
+          puntoCodice: punto.codice,
+          puntoDescrizione: punto.descrizione,
+          tipologia: punto.tipologia,
+          esito: null,
+          valoreRilevato: '',
+          note: '',
+          oraInizio: null,
+          oraFine: null,
+          fotoPrima: null,
+          fotoDopo: null,
+        }));
+      });
+      setVerifiche(initial);
+    }
   }, [protocolloTipo, deviceList]);
 
   useEffect(() => {
@@ -132,6 +144,34 @@ const ChecklistUNI11224 = ({
         i === puntoIndex ? { ...v, [field]: value } : v
       )
     }));
+  };
+
+  const updateItemEsito = (idx, esito) => {
+    setVerifiche(prev => ({
+      ...prev,
+      _items: prev._items.map((item, i) => i === idx ? { ...item, esito } : item)
+    }));
+  };
+
+  const updateItemNote = (idx, note) => {
+    setVerifiche(prev => ({
+      ...prev,
+      _items: prev._items.map((item, i) => i === idx ? { ...item, note } : item)
+    }));
+  };
+
+  const handleItemPhoto = async (idx, event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setVerifiche(prev => ({
+        ...prev,
+        _items: prev._items.map((item, i) => i === idx ? { ...item, foto: e.target.result } : item)
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const toggleDeviceExpand = (deviceId) => {
@@ -166,33 +206,44 @@ const ChecklistUNI11224 = ({
   const saveVerifiche = async () => {
     setIsSaving(true);
     
-    const payload = {
-      pianoId,
-      centraleId,
-      protocolloTipo,
-      verifiche,
-      savedAt: new Date().toISOString(),
-      isOnline,
-    };
-
     try {
-      if (isOnline) {
-        const { error } = await supabase.from('verifiche_punto').insert(payload);
-        if (error) throw new Error('Errore salvataggio');
+      if (verifiche._items) {
+        const itemsToSave = verifiche._items.map(item => ({
+          piano_id: pianoId,
+          centrale_id: centraleId,
+          dispositivo_id: null,
+          codice_verifica: item.codice,
+          descrizione: item.descrizione,
+          tipologia: item.tipologia,
+          esito: item.esito === 'na' ? 'na' : item.esito === true ? 'ok' : item.esito === false ? 'anomalia' : null,
+          note: item.note || null,
+          foto_url: item.foto || null,
+        }));
+        
+        const { error } = await supabase.from('verifiche_punto').insert(itemsToSave);
+        if (error) throw error;
       } else {
-        localStorage.setItem(
-          `pending_sync_${pianoId}_${Date.now()}`,
-          JSON.stringify(payload)
-        );
+        const payload = {
+          pianoId,
+          centraleId,
+          protocolloTipo,
+          verifiche,
+          savedAt: new Date().toISOString(),
+        };
+        const { error } = await supabase.from('verifiche_punto').insert(payload);
+        if (error) throw error;
       }
       
       setLastSync(new Date());
-      onSave?.(payload);
+      alert('Checklist salvata con successo!');
+      onComplete?.(verifiche);
     } catch (err) {
+      console.error('Errore salvataggio:', err);
       localStorage.setItem(
         `pending_sync_${pianoId}_${Date.now()}`,
-        JSON.stringify(payload)
+        JSON.stringify(verifiche)
       );
+      alert('Salvato in locale. Sincronizzerai quando tornerai online.');
     } finally {
       setIsSaving(false);
     }
@@ -224,12 +275,17 @@ const ChecklistUNI11224 = ({
 
   const calculateProgress = () => {
     let total = 0, completati = 0;
-    Object.values(verifiche).forEach(deviceVerifiche => {
-      deviceVerifiche.forEach(v => {
-        total++;
-        if (v.esito !== null) completati++;
+    if (verifiche._items) {
+      total = verifiche._items.length;
+      completati = verifiche._items.filter(v => v.esito !== null).length;
+    } else {
+      Object.values(verifiche).forEach(deviceVerifiche => {
+        deviceVerifiche.forEach(v => {
+          total++;
+          if (v.esito !== null) completati++;
+        });
       });
-    });
+    }
     return total > 0 ? Math.round((completati / total) * 100) : 0;
   };
 
@@ -303,11 +359,107 @@ const ChecklistUNI11224 = ({
       </div>
 
       <div className="space-y-4">
-        {deviceList.length === 0 ? (
+        {verifiche._items && (
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="p-4">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-blue-50">
+                    <th className="text-left p-3 text-xs font-medium text-gray-500 w-20">Codice</th>
+                    <th className="text-left p-3 text-xs font-medium text-gray-500">Punto Norma</th>
+                    <th className="text-left p-3 text-xs font-medium text-gray-500 w-24">Tipo</th>
+                    <th className="text-center p-3 text-xs font-medium text-gray-500 w-32">Esito</th>
+                    <th className="text-left p-3 text-xs font-medium text-gray-500">Note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {verifiche._items.map((item, idx) => (
+                    <tr key={idx} className="border-t">
+                      <td className="p-3 font-mono text-sm font-bold text-blue-600">{item.codice}</td>
+                      <td className="p-3">
+                        <div className="text-sm text-gray-800">{item.descrizione}</div>
+                        {item.norma && <div className="text-xs text-gray-500 mt-1">{item.norma}</div>}
+                      </td>
+                      <td className="p-3">
+                        <span className={`px-2 py-1 text-xs rounded ${
+                          item.tipologia === 'prova_funzionalità' ? 'bg-blue-100 text-blue-700' :
+                          item.tipologia === 'prova_efficacia' ? 'bg-purple-100 text-purple-700' :
+                          item.tipologia === 'documentale' ? 'bg-orange-100 text-orange-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {item.tipologia.replace('prova_', '').replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="p-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => updateItemEsito(idx, true)}
+                            className={`px-3 py-2 rounded font-medium ${
+                              item.esito === true ? 'bg-green-500 text-white' : 'bg-gray-200 hover:bg-green-200'
+                            }`}
+                          >
+                            OK
+                          </button>
+                          <button
+                            onClick={() => updateItemEsito(idx, false)}
+                            className={`px-3 py-2 rounded font-medium ${
+                              item.esito === false ? 'bg-red-500 text-white' : 'bg-gray-200 hover:bg-red-200'
+                            }`}
+                          >
+                            ANOMALIA
+                          </button>
+                          <button
+                            onClick={() => updateItemEsito(idx, 'na')}
+                            className={`px-3 py-2 rounded font-medium ${
+                              item.esito === 'na' ? 'bg-gray-500 text-white' : 'bg-gray-200 hover:bg-gray-400'
+                            }`}
+                          >
+                            N/A
+                          </button>
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        {item.esito === false && (
+                          <div className="space-y-2">
+                            <textarea
+                              value={item.note || ''}
+                              onChange={(e) => updateItemNote(idx, e.target.value)}
+                              placeholder="Descrivi l'anomalia riscontrata..."
+                              className="w-full p-2 text-sm border border-red-200 rounded-lg"
+                              rows="2"
+                            />
+                            <div className="flex items-center gap-2">
+                              <label className="text-xs text-gray-500 flex items-center gap-1 cursor-pointer">
+                                <Camera className="w-4 h-4" />
+                                Allega foto
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  capture="environment"
+                                  className="hidden"
+                                  onChange={(e) => handleItemPhoto(idx, e)}
+                                />
+                              </label>
+                              {item.foto && <span className="text-xs text-green-600">Foto allegata</span>}
+                            </div>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {!verifiche._items && deviceList.length === 0 && (
           <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
             Nessun dispositivo associato. Aggiungi dispositivi alla centrale.
           </div>
-        ) : (
+        )}
+
+        {!verifiche._items && deviceList.length > 0 && (
           deviceList.map(device => (
             <div key={device.id} className="bg-white rounded-lg shadow overflow-hidden">
               <button
