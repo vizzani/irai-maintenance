@@ -2,21 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { 
   ClipboardList, FileText, Calendar, User, Search,
   Download, Plus, Filter, CheckCircle, XCircle, AlertTriangle,
-  Clock, MapPin, Cpu, Wrench, Camera, Eye
+  Clock, MapPin, Cpu, Wrench, Camera, Eye, X
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const InterventiVerbali = ({ initialTab = 'interventi' }) => {
   const [tab, setTab] = useState(initialTab);
   const [data, setData] = useState({ interventi: [], verbali: [], nc: [] });
+  const [centrali, setCentrali] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState({ stato: '', dataDa: '', dataA: '' });
+  const [showModal, setShowModal] = useState(false);
+  const [newIntervento, setNewIntervento] = useState({
+    centrale_id: '',
+    protocollo_tipo: 'sorveglianza',
+    data_prevista: '',
+    stato: 'pendente'
+  });
 
   useEffect(() => {
     loadData();
+    loadCentrali();
   }, [tab]);
+
+  const loadCentrali = async () => {
+    const { data } = await supabase.from('centrali').select('*, sedi(nome_sede)').limit(100);
+    setCentrali(data || []);
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -53,6 +67,21 @@ const InterventiVerbali = ({ initialTab = 'interventi' }) => {
     }
     
     return items;
+  };
+
+  const handleSaveIntervento = async () => {
+    if (!newIntervento.centrale_id) {
+      alert('Seleziona una centrale');
+      return;
+    }
+    const { error } = await supabase.from('piani_manutenzione').insert([newIntervento]);
+    if (error) {
+      alert('Errore: ' + error.message);
+      return;
+    }
+    setShowModal(false);
+    setNewIntervento({ centrale_id: '', protocollo_tipo: 'sorveglianza', data_prevista: '', stato: 'pendente' });
+    loadData();
   };
 
   const downloadVerbale = async (id) => {
@@ -114,7 +143,7 @@ const InterventiVerbali = ({ initialTab = 'interventi' }) => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Interventi e Verbali</h1>
           <button
-            onClick={() => window.location.href = '/checklist'}
+            onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             <Plus className="w-4 h-4" />
@@ -489,6 +518,72 @@ const InterventiVerbali = ({ initialTab = 'interventi' }) => {
           </div>
         )}
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Nuovo Intervento</h2>
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Centrale *</label>
+                <select
+                  value={newIntervento.centrale_id}
+                  onChange={(e) => setNewIntervento({ ...newIntervento, centrale_id: e.target.value })}
+                  className="w-full p-2 border rounded-lg"
+                >
+                  <option value="">Seleziona centrale...</option>
+                  {centrali.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.marca} {c.modello} - {c.sedi?.nome_sede || 'Sede'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo Protocollo</label>
+                <select
+                  value={newIntervento.protocollo_tipo}
+                  onChange={(e) => setNewIntervento({ ...newIntervento, protocollo_tipo: e.target.value })}
+                  className="w-full p-2 border rounded-lg"
+                >
+                  <option value="sorveglianza">Sorveglianza</option>
+                  <option value="controllo_periodico">Controllo Periodico</option>
+                  <option value="verifica_annuale">Verifica Annuale</option>
+                  <option value="manutenzione">Manutenzione</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data Prevista</label>
+                <input
+                  type="date"
+                  value={newIntervento.data_prevista}
+                  onChange={(e) => setNewIntervento({ ...newIntervento, data_prevista: e.target.value })}
+                  className="w-full p-2 border rounded-lg"
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleSaveIntervento}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Salva
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
