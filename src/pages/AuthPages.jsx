@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { Flame, Mail, Lock, User, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -544,7 +549,5 @@ const UpdatePassword = () => {
     </div>
   );
 };
-
-import supabase from './lib/supabase';
 
 export { Login, Register, ResetPassword, UpdatePassword };

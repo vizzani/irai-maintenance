@@ -45,14 +45,14 @@ const Dashboard = ({ onNavigate }) => {
       pendente: 'text-yellow-600 bg-yellow-50 border-yellow-200',
       in_corso: 'text-blue-600 bg-blue-50 border-blue-200',
       completato: 'text-green-600 bg-green-50 border-green-200',
-      in ritardo: 'text-red-600 bg-red-50 border-red-200'
+      'in ritardo': 'text-red-600 bg-red-50 border-red-200'
     };
     return colori[stato] || colori.pendente;
   };
 
   const getStatoIcon = (stato) => {
-    if (stato === 'completato') return <CheckCircle className="w-5 h-5 text-green-500" />;
-    if (stato === 'in ritardo' || stato === 'pendente') return <Clock className="w-5 h-5 text-yellow-500" />;
+    if (stato === 'completato') return React.createElement(CheckCircle, { className: 'w-5 h-5 text-green-500' });
+    if (stato === 'in ritardo' || stato === 'pendente') return React.createElement(Clock, { className: 'w-5 h-5 text-yellow-500' });
     return <Wrench className="w-5 h-5 text-blue-500" />;
   };
 

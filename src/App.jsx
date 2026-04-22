@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { 
   LayoutDashboard, Building2, ClipboardCheck, 
   FileText, Settings, LogOut, Menu, X, 
@@ -39,7 +39,7 @@ const AppContent = () => {
     { id: 'verbali', label: 'Verbali', icon: FileText },
   ];
 
-  const handleNavigate = (view,params) => {
+  const handleNavigate = (view, params) => {
     if (view === 'checklist' && params?.centraleId) {
       setCentraleSelezionata(params.centraleId);
     }
@@ -53,146 +53,120 @@ const AppContent = () => {
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
-        return <Dashboard onNavigate={handleNavigate} />;
+        return React.createElement(Dashboard, { onNavigate: handleNavigate });
       case 'anagrafica':
-        return <Anagrafica />;
+        return React.createElement(Anagrafica);
       case 'interventi':
       case 'verbali':
-        return <InterventiVerbali initialTab={currentView === 'verbali' ? 'verbali' : 'interventi'} />;
+        return React.createElement(InterventiVerbali, { initialTab: currentView === 'verbali' ? 'verbali' : 'interventi' });
       case 'checklist':
-        return (
-          <ChecklistUNI11224 
-            pianoId={centraleSelezionata?.pianoId}
-            centraleId={centraleSelezionata?.centraleId}
-            protocolloTipo={centraleSelezionata?.protocolloTipo || 'sorveglianza'}
-            onSave={(data) => console.log('Salvato:', data)}
-            onComplete={() => setCurrentView('interventi')}
-            deviceList={centraleSelezionata?.dispositivi || []}
-          />
-        );
+        return React.createElement(ChecklistUNI11224, {
+          pianoId: centraleSelezionata?.pianoId,
+          centraleId: centraleSelezionata?.centraleId,
+          protocolloTipo: centraleSelezionata?.protocolloTipo || 'sorveglianza',
+          onSave: (data) => console.log('Salvato:', data),
+          onComplete: () => setCurrentView('interventi'),
+          deviceList: centraleSelezionata?.dispositivi || []
+        });
       default:
-        return <Dashboard onNavigate={handleNavigate} />;
+        return React.createElement(Dashboard, { onNavigate: handleNavigate });
     }
   };
 
+  const asideClass = sidebarOpen ? 'w-64' : 'w-20';
+  const mainClass = sidebarOpen ? 'ml-64' : 'ml-20';
+
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gray-900 text-white transition-all duration-300 fixed h-screen overflow-y-auto`}>
-        <div className="p-4 border-b border-gray-800 flex justify-between items-center">
-          {sidebarOpen && (
-            <div className="flex items-center gap-2">
-              <Flame className="w-8 h-8 text-red-500" />
-              <div>
-                <h1 className="font-bold text-sm">IRAI</h1>
-                <p className="text-xs text-gray-400">Manutenzione</p>
-              </div>
-            )}
-          )}
-          <button 
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-800 rounded"
-          >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
-
-        <nav className="p-2 space-y-1">
-          {menuItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => handleNavigate(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
-                currentView === item.id 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-300 hover:bg-gray-800'
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              {sidebarOpen && <span className="text-sm font-medium">{item.label}</span>}
-            </button>
-          ))}
-        </nav>
-
-        <div className="absolute bottom-0 w-full p-4 border-t border-gray-800">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <User className="w-5 h-5 text-gray-400" />
-              {sidebarOpen && (
-                <div>
-                  <p className="text-sm font-medium">{profilo?.nome || user?.email}</p>
-                  <p className="text-xs text-gray-400 capitalize">{profilo?.ruolo || 'Tecnico'}</p>
-                </div>
-              )}
-            </div>
-            <button 
-              onClick={handleLogout}
-              className="p-2 hover:bg-gray-800 rounded text-gray-400 hover:text-red-400"
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      <main className={`flex-1 ${sidebarOpen ? 'ml-64' : 'ml-20'} transition-all duration-300`}>
-        <header className="bg-white border-b h-16 flex items-center justify-between px-6 sticky top-0 z-10">
-          <div className="flex items-center gap-4">
-            <h2 className="text-lg font-semibold text-gray-800">
-              {menuItems.find(m => m.id === currentView)?.label || 'Dashboard'}
-            </h2>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${
-              isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            }`}>
-              {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-              <span className="font-medium">{isOnline ? 'Online' : 'Offline'}</span>
-            </div>
-
-            <button className="relative p-2 hover:bg-gray-100 rounded-full">
-              <Bell className="w-5 h-5 text-gray-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-
-            <button className="p-2 hover:bg-gray-100 rounded-full">
-              <Settings className="w-5 h-5 text-gray-600" />
-            </button>
-          </div>
-        </header>
-
-        <div className="p-6">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : (
-            renderView()
-          )}
-        </div>
-      </main>
-    </div>
+    React.createElement('div', { className: 'min-h-screen bg-gray-100 flex' },
+      React.createElement('aside', { className: `${asideClass} bg-gray-900 text-white transition-all duration-300 fixed h-screen overflow-y-auto` },
+        React.createElement('div', { className: 'p-4 border-b border-gray-800 flex justify-between items-center' },
+          sidebarOpen && React.createElement('div', { className: 'flex items-center gap-2' },
+            React.createElement(Flame, { className: 'w-8 h-8 text-red-500' }),
+            React.createElement('div', null,
+              React.createElement('h1', { className: 'font-bold text-sm' }, 'IRAI'),
+              React.createElement('p', { className: 'text-xs text-gray-400' }, 'Manutenzione')
+            )
+          ),
+          React.createElement('button', {
+            onClick: () => setSidebarOpen(!sidebarOpen),
+            className: 'p-2 hover:bg-gray-800 rounded'
+          }, sidebarOpen ? React.createElement(X, { className: 'w-5 h-5' }) : React.createElement(Menu, { className: 'w-5 h-5' }))
+        ),
+        React.createElement('nav', { className: 'p-2 space-y-1' },
+          ...menuItems.map(item =>
+            React.createElement('button', {
+              key: item.id,
+              onClick: () => handleNavigate(item.id),
+              className: `w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${currentView === item.id ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`
+            }, [
+              React.createElement(item.icon, { key: 'icon', className: 'w-5 h-5' }),
+              sidebarOpen && React.createElement('span', { key: 'label', className: 'text-sm font-medium' }, item.label)
+            ])
+          )
+        ),
+        React.createElement('div', { className: 'absolute bottom-0 w-full p-4 border-t border-gray-800' },
+          React.createElement('div', { className: 'flex items-center justify-between' },
+            React.createElement('div', { className: 'flex items-center gap-2' },
+              React.createElement(User, { className: 'w-5 h-5 text-gray-400' }),
+              sidebarOpen && React.createElement('div', null,
+                React.createElement('p', { className: 'text-sm font-medium' }, profilo?.nome || user?.email),
+                React.createElement('p', { className: 'text-xs text-gray-400 capitalize' }, profilo?.ruolo || 'Tecnico')
+              )
+            ),
+            React.createElement('button', {
+              onClick: handleLogout,
+              className: 'p-2 hover:bg-gray-800 rounded text-gray-400 hover:text-red-400',
+              title: 'Logout'
+            }, React.createElement(LogOut, { className: 'w-5 h-5' }))
+          )
+        )
+      ),
+      React.createElement('main', { className: `flex-1 ${mainClass} transition-all duration-300` },
+        React.createElement('header', { className: 'bg-white border-b h-16 flex items-center justify-between px-6 sticky top-0 z-10' },
+          React.createElement('div', { className: 'flex items-center gap-4' },
+            React.createElement('h2', { className: 'text-lg font-semibold text-gray-800' },
+              menuItems.find(m => m.id === currentView)?.label || 'Dashboard'
+            )
+          ),
+          React.createElement('div', { className: 'flex items-center gap-4' },
+            React.createElement('div', { className: `flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` },
+              isOnline ? React.createElement(Wifi, { className: 'w-4 h-4' }) : React.createElement(WifiOff, { className: 'w-4 h-4' }),
+              React.createElement('span', { className: 'font-medium' }, isOnline ? 'Online' : 'Offline')
+            ),
+            React.createElement('button', { className: 'relative p-2 hover:bg-gray-100 rounded-full' },
+              React.createElement(Bell, { className: 'w-5 h-5 text-gray-600' }),
+              React.createElement('span', { className: 'absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full' })
+            ),
+            React.createElement('button', { className: 'p-2 hover:bg-gray-100 rounded-full' },
+              React.createElement(Settings, { className: 'w-5 h-5 text-gray-600' })
+            )
+          )
+        ),
+        React.createElement('div', { className: 'p-6' },
+          loading
+            ? React.createElement('div', { className: 'flex items-center justify-center h-64' },
+              React.createElement('div', { className: 'animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600' })
+            )
+            : renderView()
+        )
+      )
+    )
   );
 };
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/update-password" element={<UpdatePassword />} />
-          <Route path="/*" element={
-            <ProtectedRoute>
-              <AppContent />
-            </ProtectedRoute>
-          } />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+    React.createElement(BrowserRouter, null,
+      React.createElement(AuthProvider, null,
+        React.createElement(Routes, null,
+          React.createElement(Route, { path: '/login', element: React.createElement(Login) }),
+          React.createElement(Route, { path: '/register', element: React.createElement(Register) }),
+          React.createElement(Route, { path: '/reset-password', element: React.createElement(ResetPassword) }),
+          React.createElement(Route, { path: '/update-password', element: React.createElement(UpdatePassword) }),
+          React.createElement(Route, { path: '/*', element: React.createElement(ProtectedRoute, null, React.createElement(AppContent)) })
+        )
+      )
+    )
   );
 };
 
