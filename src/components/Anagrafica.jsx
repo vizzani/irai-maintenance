@@ -55,7 +55,12 @@ const Anagrafica = ({ initialTab = 'clienti' }) => {
       const formData = tab === 'clienti' ? form.cliente : 
                        tab === 'sedi' ? form.sede : 
                        tab === 'centrali' ? form.centrale : form.dispositivo;
-      await supabase.from(table).insert([formData]);
+      const { data, error } = await supabase.from(table).insert([formData]);
+      if (error) {
+        console.error('Supabase error:', error);
+        alert('Errore: ' + error.message);
+        return;
+      }
       setIsEditing(false);
       loadData();
     } catch (err) {
