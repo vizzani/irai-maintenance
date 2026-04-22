@@ -5,6 +5,7 @@ import {
   Clock, MapPin, Cpu, Wrench, Camera, Eye, X
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import ChecklistUNI11224 from './ChecklistUNI11224';
 
 const InterventiVerbali = ({ initialTab = 'interventi' }) => {
   const [tab, setTab] = useState(initialTab);
