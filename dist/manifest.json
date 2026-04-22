@@ -1,0 +1,42 @@
+{
+  "name": "IRAI Manutenzione",
+  "short_name": "IRAI",
+  "description": "Sistema Gestione Manutenzione Impianti Antincendio - UNI 11224",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/flame.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  " shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/?view=dashboard",
+      "icons": [{ "src": "/flame.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Nuovo Intervento",
+      "short_name": "Intervento",
+      "url": "/?view=checklist",
+      "icons": [{ "src": "/flame.svg", "sizes": "96x96" }]
+    }
+  ]
+}
